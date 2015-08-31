@@ -1,0 +1,222 @@
+.Steel__Grid{
+	border-collapse: collapse;
+}
+
+.Steel__Grid{
+	font-size: 100%; /* override browser default "medium" for tables */
+}
+
+.Steel__Grid [sg_textAlign="left"]{ text-align: left; }
+.Steel__Grid [sg_textAlign="right"]{ text-align: right; }
+.Steel__Grid [sg_textAlign="center"]{ text-align: center; }
+
+
+.Steel__Grid .sg_tr:hover{
+/*	background-color: #CBD9F1;*/
+}
+
+.Steel__Grid input.sg_cellEditor, .Steel__Grid textarea.sg_cellEditor{
+	padding: 0;
+	margin: 0;
+	width: 97%;
+}
+
+
+.Steel__Grid .sg_th,
+.Steel__Grid .sg_cell,
+.Steel__Grid .sg_pageNavigation{
+	border: 1px solid #a4bed4;
+	padding: 2px 4px 2px 4px;
+}
+
+
+.Steel__Grid .sg_th{
+	text-align: center;
+}
+.Steel__Grid .sg_header, .Steel__Grid .sg_pageNavigation{
+	background: #e0e9f5;
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;          /* Likely future */
+}
+
+.Steel__Grid .sg_th, .Steel__Grid .sg_pageNavigation{padding-top: 5px; padding-bottom: 5px; }
+
+.Steel__Grid .sg_totalsInfo{
+	display: inline-block;
+	float: right;
+	padding-right: 4px;
+	line-height: 22px;
+}
+
+.Steel__Grid .sg_pageNavigation > *{ vertical-align: middle; }
+
+
+
+.Steel__Grid .sg_button{
+	display: inline-block;
+	border-radius: 4px;
+	background-repeat: no-repeat;
+	background-position: center center;
+	cursor:pointer;
+	border-width: 1px;
+	border-style: solid;
+	border-color: transparent;
+}
+
+
+.Steel__Grid .sg_button:hover{ background-color: #CBD9F1; }
+
+.Steel__Grid .sg_buttonPageFirst,
+.Steel__Grid .sg_buttonPageLast,
+.Steel__Grid .sg_buttonPageLeft,
+.Steel__Grid .sg_buttonPageRight
+{
+	width:22px; height:18px;
+	border-color: #a4bed4;
+}
+
+
+
+.Steel__Grid .sg_buttonPageFirst{ background-image: url("img/icon-first.png");}
+.Steel__Grid .sg_buttonPageLast{ background-image: url("img/icon-last.png");}
+.Steel__Grid .sg_buttonPageLeft{ background-image: url("img/icon-left.png");}
+.Steel__Grid .sg_buttonPageRight{ background-image: url("img/icon-right.png");}
+
+
+.sg_buttonsPages{
+	display: inline-block;
+	max-width: 70%;
+	overflow: hidden;
+	padding-left: 6px;
+	padding-right: 6px;
+	white-space: nowrap;
+}
+.Steel__Grid .sg_buttonPage{
+	padding: 2px 4px 2px 4px;
+}
+
+.Steel__Grid .sg_buttonPage + .sg_buttonPage { margin-left: 2px;}
+
+.Steel__Grid .sg_buttonPage.sg_active{
+	background-color: #CBD9F1;
+	border-color:#5e8cb3;
+}
+
+
+
+.Steel__Grid .sg_buttonPage:hover{
+	border-color: #a4bed4;
+}
+
+.Steel__Grid .sg_th{
+	padding-left: 10px;
+	padding-right: 10px;
+	position:relative;
+	cursor: pointer;
+}
+
+
+.Steel__Grid .sg_th[sg_isSortable="0"]{
+	padding-left: 6px;
+	padding-right: 6px;
+	cursor: default;
+}
+
+
+.Steel__Grid .sg_th[sg_sort="asc"],
+.Steel__Grid .sg_th[sg_sort="desc"]{
+	padding-left: 6px;
+	padding-right: 14px;
+	background-color: #CAE1F5;
+}
+
+
+
+
+.Steel__Grid .sg_th[sg_sort="asc"]:after,
+.Steel__Grid .sg_th[sg_sort="desc"]:after,
+.Steel__Grid .sg_th:not([sg_sort="asc"]):not([sg_sort="desc"]):not([sg_issortable="0"]):hover:after{
+	content:'';
+	position:absolute;
+	right: -2px;
+    top: 5px;
+	width:17px; height:17px;
+	background-image: url(img/icon-up.png);
+
+}
+
+.Steel__Grid .sg_th[sg_sort="desc"]:after{
+	background-image: url(img/icon-down.png);
+	background-position: 0 -1px;
+}
+
+.Steel__Grid .sg_buttonInsert{
+	width: 20px;
+	height: 20px;
+	border-color: #a4bed4;
+	margin-right: 20px;
+	line-height: 21px;
+    text-align: center;
+}
+
+.Steel__Grid .sg_rowEditing{
+	background-color: #CAE1F5;
+}
+
+.Steel__Grid .sg_cell.sg_hasEditor{
+	text-align: center;
+}
+
+
+.Steel__Grid .sg_actionDelete{
+	text-decoration: underline;
+	text-align: center;
+	display: inline-block;
+	width:16px;
+	height:16px;
+	background-image: url(img/icon-delete.png);
+}
+
+
+
+.Steel__Grid .sg_buttonsEditParent{
+	width: 42px;
+	display: inline-block;
+	text-align: center;
+}
+
+.Steel__Grid .sg_buttonEditStart,
+.Steel__Grid .sg_buttonEditApply,
+.Steel__Grid .sg_buttonEditCancel
+{
+	padding: 1px ;
+	border-color: transparent;
+	text-decoration: underline;
+}
+
+.Steel__Grid .sg_buttonEditStart,
+.Steel__Grid .sg_buttonEditApply,
+.Steel__Grid .sg_buttonEditCancel{
+	display: inline-block;
+	width:16px;
+	height:16px;
+}
+
+.Steel__Grid .sg_buttonEditStart{ background-image: url(img/icon-edit.png); }
+.Steel__Grid .sg_buttonEditApply{ background-image: url(img/icon-apply.png); float:left; }
+.Steel__Grid .sg_buttonEditCancel{ background-image: url(img/icon-cancel.png); float:right; }
+
+.Steel__Grid .sb_rowCurrent{
+	background-color: #DAE1F5;
+}
+
+
+
+.Steel__Grid [sg_celleditortype=NUMBER_INT],
+.Steel__Grid [sg_celleditortype=NUMBER_DOUBLE]
+{
+	width: 96%;
+	min-width: 50px;
+}
