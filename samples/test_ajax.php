@@ -11,6 +11,7 @@ function generateData(){
 	if(isset($_SESSION['test_ajax_data'])){
 		return $_SESSION['test_ajax_data'];
 	}
+
 	$names = ["Magnum", "colt", "Railgun", "MP-40", "AK-47", 'AK-74', 'TT', 'Nuclear'];
 
 	$rows = [];
@@ -22,7 +23,8 @@ function generateData(){
 	for($i = 0; $i < $totalRecords; $i++){
 
 		$descr = substr($decrBody, 0, rand(0, strlen($decrBody)-1));
-		$descr = substr($descr, rand(0, strlen($descr)-1));
+		//$descr = substr($descr, rand(0, min(strlen($descr)-1,60)));
+		$descr = substr($descr, strlen($descr)-1 - rand(0, min(strlen($descr)-1,60)));
 
 		$row = [
 			'id' => $i+1,
@@ -134,53 +136,62 @@ if(isset($_REQUEST['SteelPackets']) ){
 
 }
 
-$native_es6 = true;
-$script_type = $native_es6 ? "text/javascript" : "text/babel";
 ?>
 
 <html>
 	<body style="font-family:Verdana; font-size:12px;">
-		<script src="../../jquery-1.11.1.min.js"></script>
 
-		<?php if(!$native_es6){?><script src="../../babel/browser.min.js"></script><?php } ?>
-
+		<script src="../vendor/jquery-1.11.1.min.js"></script>
 		<link type="text/css" rel="stylesheet" href="../css/base.css">
 
-		<script type="<?=$script_type?>" src="../Core.js"></script>
-		<script type="<?=$script_type?>" src="../DataProviderAjax.js"></script>
-		<script type="<?=$script_type?>" src="../Grid.js"></script>
+		<script src="../utils/load_scripts_es6.js"></script>
 
-		<script type="<?=$script_type?>">
+
+		<script>
 			"use strict";
 
-			$(function(){
+			function main()	{
+				$(function(){
+					$('.grid_parent').empty();
 
 
-				var testDataproviderAjax = new Steel.DataProviderAjax("<?=$_SERVER['REQUEST_URI']?>");
+					var testDataproviderAjax = new Steel__DataProviderAjax("<?=$_SERVER['REQUEST_URI']?>");
 
 
-				var settings = {
-					dataProvider: testDataproviderAjax,
-					sorting: [ ['name', 1], ['capacity', -1] ],
-					limit: 20,
-					fixedWidth:1200,
-					fixedHeight:500,
-				}
+					var settings = {
+						dataProvider: testDataproviderAjax,
+						sorting: [ ['name', 1], ['capacity', -1] ],
+						limit: 20,
+						fixedWidth:1200,
+						fixedHeight:500,
+					}
 
-				var grid = new Steel.Grid(settings);
-				window.g = grid;
+					var grid = new Steel__Grid(settings);
+					window.g = grid;
 
 
-				grid.renderInitial($('.grid_parent'));
+					grid.renderInitial($('.grid_parent'));
 
-				grid.fetchData();
+					grid.fetchData();
 
-			})
+				})
+			}
+
+			load_scripts_es6(
+				[
+					"../Core.js",
+					"../DataProviderAjax.js",
+					"../Grid.js"
+				],
+				"../vendor/babel/browser.min.js", // babel compiler, in case browser not currently supports ES6 (firefox, ie, safari)
+				false, // enable trace of loading scripts
+				main // will be called after loading of scripts
+			)
 
 		</script>
 
 		<div class="grid_parent">
-
+			<div style="font-size:15px;color:#2170C5;background:#9BEEFF;padding:4px;max-width:400px;">Loading....</div>
 		</div>
 
 	</body>
