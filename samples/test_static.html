@@ -1,0 +1,64 @@
+<html>
+	<body>
+		<script src="../../../libs/jquery-1.11.1.min.js"></script>
+		<link type="text/css" rel="stylesheet" href="../css/base.css">
+
+		<script src="../utils/load_scripts_es6.js"></script>
+
+		<script>
+			"use strict";
+
+			function main()	{
+				$(function(){
+
+					$('.grid_parent').empty();
+
+					var grid = new Steel__Grid({enabledEdit:false, enabledInsert:false, enabledDelete:false});
+					window.g = grid;
+
+
+
+					var testDataproviderStatic = new Steel__DataProviderStatic(/*[
+					 new Steel.DataProvidDataProviderFielderField({name:'id',title:'Id'}),
+					 new Steel.DataProviderField({name:'name',title:'Name'}),
+					 new Steel.DataProviderField({name:'description',title:'Description'})
+					 ]*/null,[
+						{id:101, name: 'Dammmah', description: 'Ezfkeaskld als asdasd'},
+						{id:102, name: 'Dammmah2', description: ''},
+						{id:103, name: 'Dammmah3', description: '2331 !@#! @# !@#! @#@!#@<>'}
+					]);
+
+
+					var testDataproviderAjax = testDataproviderStatic;
+
+					grid.settings.dataProvider = testDataproviderStatic;
+
+					window.tdp = grid.dataProvider;
+
+					grid.renderInitial($('.grid_parent'));
+
+					grid.fetchData();
+
+
+				});
+			}
+
+			load_scripts_es6(
+				[
+					"../Core.js",
+					"../DataProviderStatic.js",
+					"../Grid.js"
+				],
+				"../../../libs/babel/browser.min.js", // babel compiler, in case browser not currently supports ES6 (firefox, ie, safari)
+				false, // enable trace of loading scripts
+				main // will be called after loading of scripts
+			)
+
+		</script>
+
+		<div class="grid_parent">
+			<div style="font-size:15px;color:#2170C5;background:#9BEEFF;padding:4px;max-width:400px;">Loading....</div>
+		</div>
+
+	</body>
+</html>
