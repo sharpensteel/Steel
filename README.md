@@ -1,5 +1,5 @@
 ## Steel
-Javascript GridView library. Supporting obtaining data from server (ajax requests) or from standalone data. Supports editing / sorting / column wide customizing.
+Javascript GridView library with paging, sorting, editing. Getting data from various sorces.
 
 ## Features
 * Data obtained from any of *data providers*. They can load data from server, static arrays, etc. 
@@ -25,8 +25,12 @@ See [test_ajax.php](https://github.com/sharpensteel/Steel/tree/master/tests/test
 jQuery library (tested on v1.11+)
 
 
-Library written in JavaScript ES6. Support in Chrome only, for other browsers you should use js compilers/polyfills. In [samples](https://github.com/sharpensteel/Steel/tree/master/tests) used compiler [babel](https://babeljs.io/)
+Library written in JavaScript ES6. 
+To support brosers that currently not support ES6 (FF, IE, Safary), compilers/polyfills should be used. Compiler [babel](https://babeljs.io/) can be used.
 
+There is utility [load_scripts_es6.js](https://github.com/sharpensteel/Steel/tree/master/utils/load_scripts_es6.js) - look at [samples](https://github.com/sharpensteel/Steel/tree/master/samples).
+It uses babel compiler in not-ES6 browsers, or loads scripts directly in ES6-browsers (which is faster a lot).  
+    
 
 Number of HTML5 features used:
 * \<input type='date'\> - (currently Chrome only support)
