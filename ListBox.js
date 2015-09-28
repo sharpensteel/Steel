@@ -50,7 +50,7 @@
 		/** @var string used in default render of item, if `customGenerateCaption` not set; OPTIONAL */
 		this.captionFieldName = null;
 
-		/** @var PSteel__ListBox__customRenderInitial} OPTIONAL */
+		/** @var {Steel__ListBox__customRenderInitial} OPTIONAL */
 		this.customRenderInitial = null;
 
 		/** @var {Steel__ListBox__customRenderItem} OPTIONAL */
@@ -75,7 +75,7 @@
 		this.$control = null;
 
 		/** @var Steel__DataProviderField[]|null  PRIVATE */
-		this.fieldsAvaliable = null;
+		this.fieldsAvailable = null;
 
 		/** @var mixed[];  example: [{'id':78, 'name':'Esda'}, ...]; if this packet is response on change operation, there will be changed rows  PRIVATE */
 		this.rowsData = [];
@@ -90,8 +90,8 @@
 		this.dataProvider.request(
 			this,
 			[
-				new Steel__PacketOutDataProvider({
-					operation: Steel.ENUM_PACKET_REQUEST_OPERATION.FETCH
+				new Steel__PacketClientDataProvider({
+					operation: Steel.ENUM_PACKET_CLIENT_OPERATION.FETCH
 					//sorting: this.sorting
 				})
 			]
@@ -102,7 +102,7 @@
 	 * renders listBox in `elemContainer`;
 	 * automaticly requests items from `dataProvider`
 	 *
-	 * @param {HTMLElement|jQuery} elemContainer  if set, new listbox will be appened to it;  OPTIONAL
+	 * @param {HTMLElement|jQuery|undefined} elemContainer optional if set, new listbox will be appened to it;  OPTIONAL
 	 * @return {jQuery} created list item
 	 */
 	render(elemContainer){
@@ -125,12 +125,12 @@
 
 	/**
 	 * @private
-	 * @param {Steel__PacketInDataProvider[]} packets
+	 * @param {Steel__PacketServerDataProvider[]} packets
 	 */
 	onDataReceived(packets){
 		for(let ipacket=0; ipacket<packets.length; ipacket++){
 			let packet = packets[ipacket];
-			if(packet.operation != Steel.ENUM_PACKET_RESPONSE_OPERATION.AFTER_FETCH){
+			if(packet.operation != Steel.ENUM_PACKET_SERVER_OPERATION.AFTER_FETCH){
 				continue; // we don't know what to do with other packets, we not expecting them
 			}
 
@@ -138,7 +138,7 @@
 				this.valueFieldName = packet.keyFieldName;
 			}
 
-			this.fieldsAvaliable = packet.fieldsAvaliable;
+			this.fieldsAvailable = packet.fieldsAvailable;
 			this.rowsData = packet.rows;
 
 			this.renderItems();
@@ -150,9 +150,11 @@
 
 		if(!this.rowsData.length) return;
 
+		//let allowNull = !this.fieldsAvailable || !("allowNull" in this.fieldsAvailable) || this.fieldsAvailable.allowNull;
+
 		let valueFieldName = this.valueFieldName;
-		if(!valueFieldName && this.fieldsAvaliable && this.fieldsAvaliable.length){
-			valueFieldName = this.fieldsAvaliable[0].name;
+		if(!valueFieldName && this.fieldsAvailable && this.fieldsAvailable.length){
+			valueFieldName = this.fieldsAvailable[0].name;
 		}
 		if(!valueFieldName){
 			for(let fieldName in this.rows[0]){ valueFieldName = fieldName; break; }
@@ -178,7 +180,7 @@
 
 			$item.html(caption).attr({
 				value: rowData[valueFieldName],
-				class: 'slb_item'
+				'class': 'slb_item'
 			});
 
 			if(this.customRenderItem){
@@ -190,6 +192,13 @@
 		if(this.valueSelected != null){
 			this.$control.val(this.valueSelected);
 		}
+
+		let _ = this;
+		this.$control.on('change',function(){
+			let newValue = _.getSelectedValue();
+			_.$control.trigger('Steel__ListBox:ValueChanged',newValue);
+		});
+
 	}
 
 	/** @return returns value of selected item in listbox */
@@ -199,6 +208,19 @@
 	}
 
 
+	/**
+	 * @param {function(*, *)} handler when editor value changes, handler(event, newValue) called
+	 * @returns {string} eventUid for unregister
+	 */
+	registerOnEditorValueChanged(handler){
+		var eventUid = 'Steel__ListBox:ValueChanged.UID'+Math.floor(Math.random()*100000000000);
+		this.$control.on(eventUid,handler);
+		return eventUid;
+	}
+
+	unregisterOnEditorValueChanged(eventUid){
+		return this.$control.off(eventUid);
+	}
 }
-Steel.ListBox = Steel__ListBox;
+window.Steel__ListBox = Steel__ListBox;
 

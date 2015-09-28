@@ -13,7 +13,7 @@
 class Steel__DataProviderStatic extends Steel__DataProvider{
 
 	/**
-	 * @param {null|Steel.DataProviderField[]} fields
+	 * @param {null|Steel__DataProviderField[]} fields
 	 * @param {array} rows
 	 * @param {string} keyFieldName
 	 */
@@ -28,21 +28,21 @@ class Steel__DataProviderStatic extends Steel__DataProvider{
 
 	/**
 	 * @param {Steel__IDataReceiver} receiver
-	 * @param {Steel__PacketOutDataProvider[]} packets
+	 * @param {Steel__PacketClientDataProvider[]} packets
 	 */
 	request(receiver, packets)
 	{
 		var responses = [];
 		for(var i=0; i<packets.length; i++){
 			var packet = packets[i];
-			if(packet.operation != Steel.ENUM_PACKET_REQUEST_OPERATION.FETCH){
+			if(packet.operation != Steel.ENUM_PACKET_CLIENT_OPERATION.FETCH){
 				throw Steel.EXCEPTION__NOT_IMPLEMENTED;
 			}
 
-			var response = new Steel__PacketInGridAfterFetch(); // Steel__PacketInGridAfterFetch
+			var response = new Steel__PacketServerGridAfterFetch(); // Steel__PacketServerGridAfterFetch
 
-			response.operation = Steel.ENUM_PACKET_RESPONSE_OPERATION.AFTER_FETCH;
-			response.fieldsAvaliable = this.fields;
+			response.operation = Steel.ENUM_PACKET_SERVER_OPERATION.AFTER_FETCH;
+			response.fieldsAvailable = this.fields;
 			response.rows = this.rows;
 			response.keyFieldName = this.keyFieldName;
 			//response.totalRows = this.rows.length;
@@ -55,4 +55,4 @@ class Steel__DataProviderStatic extends Steel__DataProvider{
 
 
 }
-Steel.DataProviderStatic = Steel__DataProviderStatic;
+window.Steel__DataProviderStatic = Steel__DataProviderStatic;

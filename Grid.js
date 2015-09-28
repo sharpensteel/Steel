@@ -22,23 +22,19 @@
 /**
 * custom rendering of cell in row; i.e. <td> tag
 * @callback Steel__GridColumnSettings__customRenderCell
-* @param {jQuery} $cell cell, rendered by default
+* @param {Steel__GridCell} cell
 * @param {string} val cell value
 * @param {Steel__Grid} grid
-* @param {Steel__GridRow} row
-* @param {Steel__GridColumn} column
 * @param {boolean} isEditing
-* @return {jQuery} modified (or not) $cell, i.e. <td> tag
 */
 
 
 /**
  * get value from cell's editor;  this callback called when finished editing of row
  * @callback Steel__GridColumnSettings__customGetEditorValue
- * @param {jQuery} $elem cell, i.e. <td> tag
- * @return {mixed}
+ * @param {Steel__GridCell} cell
+ * @return {*}
  */
-
 
 
 window.Steel__ENUM_CELL_EDITOR_TYPE = {
@@ -50,7 +46,7 @@ window.Steel__ENUM_CELL_EDITOR_TYPE = {
 	EMAIL: 'EMAIL',                    // default render: <input type='email'>
 	NUMBER_INT: 'NUMBER_INT',              // default render: <input type='number' step='1'>
 	NUMBER_DOUBLE: 'NUMBER_DOUBLE',    // default render: <input type='checkbox' step='0.000000000001'>
-	LISTBOX: 'LISTBOX',                // default render: <select>...</select>;  items from Steel__GridColumnSettings.listDataPrivider
+	LISTBOX: 'LISTBOX',                // default render: <select>...</select>;  items from Steel__GridColumnSettings.listDataProvider
 	TEXT: 'TEXT'                       // default render: <input type='checkbox'>
 
 	// example of custom editor:
@@ -61,8 +57,31 @@ window.Steel__ENUM_CELL_EDITOR_TYPE = {
 	//     ...
 	// ]
 };
-
 Steel.ENUM_CELL_EDITOR_TYPE = Steel__ENUM_CELL_EDITOR_TYPE;
+
+
+window.Steel__ENUM_FILTER_CONDITION = {
+	CONTAINS: "CONTAINS",
+	DOES_NOT_CONTAIN: "DOES_NOT_CONTAIN",
+	EQUAL: "EQUAL",
+	NOT_EQUAL: "NOT_EQUAL",
+	LESS_THAN: "LESS_THAN",
+	GREATER_THAN: "GREATER_THAN",
+	LESS_THAN_OR_EQUAL: "LESS_THAN_OR_EQUAL",
+	GREATER_THAN_OR_EQUAL: "GREATER_THAN_OR_EQUAL",
+	STARTS_WITH: "STARTS_WITH",
+	ENDS_WITH: "ENDS_WITH",
+	LIKE: "LIKE",
+	IN: "IN"
+};
+Steel.ENUM_FILTER_CONDITION = window.Steel__ENUM_FILTER_CONDITION;
+
+window.Steel__ENUM_FILTER_PREFIX = {
+	OR: "OR",
+	AND: "AND"
+};
+window.Steel.ENUM_FILTER_PREFIX = window.Steel__ENUM_FILTER_PREFIX;
+
 
 
 class Steel__GridColumnSettings extends Steel__Component{
@@ -79,7 +98,7 @@ class Steel__GridColumnSettings extends Steel__Component{
 		this.name = null;
 
 		/** @var {Steel__DataProvider} for drop-down list at header */
-		this.listDataPrivider = null;
+		this.listDataProvider = null;
 
 		/** @var int|null null means auto-size  */
 		this.width = null;
@@ -90,7 +109,7 @@ class Steel__GridColumnSettings extends Steel__Component{
 
 		this.isSortable = true;
 
-		/* @var {strnig} constant from enum Steel__ENUM_CELL_EDITOR_TYPE */
+		/* @var {string} constant from enum Steel__ENUM_CELL_EDITOR_TYPE */
 		this.cellEditorType = null;
 
 		/** @var {Steel__GridColumnSettings__customRenderHeaderColumn} */
@@ -102,7 +121,7 @@ class Steel__GridColumnSettings extends Steel__Component{
 		/** @var {Steel__GridColumnSettings__customGetEditorValue} */
 		this.customGetEditorValue = null;
 
-		/** @var {array} additional html attributes that applyed to <td> and <th> in default rendering */
+		/** @var {array} additional html attributes that applied to <td> and <th> in default rendering */
 		this.attributesAdditional = null;
 
 		if(props) this.applyProperties(props);
@@ -110,7 +129,7 @@ class Steel__GridColumnSettings extends Steel__Component{
 	}
 
 }
-Steel.GridColumnSettings = Steel__GridColumnSettings;
+window.Steel__GridColumnSettings = Steel__GridColumnSettings;
 
 
 
@@ -146,26 +165,22 @@ class Steel__GridColumnSettingsEditorListbox extends Steel__GridColumnSettings{
 
 	/**
 	 * custom rendering of cell in row in , i.e. <td> tag
-	 * @param {jQuery} $cell cell, rendered by default
+	 * @param {Steel__GridCell} cell
 	 * @param {string} val cell value
 	 * @param {Steel__Grid} grid
-	 * @param {Steel__GridRow} row
-	 * @param {Steel__GridColumn} column
 	 * @param {boolean} isEditing
-	 * @return {jQuery} modified (or not) $cell, i.e. <td> tag
 	 */
-	customRenderCellImplementation($cell, val, grid, row, column, isEditing) {
-		if (!isEditing || column.isReadOnly ) { // don't need to render listbox
+	customRenderCellImplementation(cell, val, grid, isEditing) {
+		if (!isEditing || cell.column.isReadOnly ) { // don't need to render listbox
 
-			let displayVal = row.rowData[this.displayFieldName];
+			let displayVal = cell.row.rowData[this.displayFieldName];
 
 			if(displayVal == undefined || displayVal == null) displayVal = '';
 
 			// todo: formatting
 
-			$cell.html(displayVal);
-
-			return $cell;
+			cell.$cell.html(displayVal);
+			return;
 		}
 
 		let props = Steel__getProperties(this.listBoxProperties);
@@ -173,24 +188,28 @@ class Steel__GridColumnSettingsEditorListbox extends Steel__GridColumnSettings{
 
 		let listbox = new Steel__ListBox(props);
 		let $listbox = listbox.render();
-		$cell.empty().append($listbox);
-		$cell.data('sb_listbox',listbox);
-		return $cell;
+
+
+		listbox.registerOnEditorValueChanged(function(event, newValue){
+			cell.emmitOnEditorValueChanged(newValue);
+		});
+
+		cell.sb_listbox = listbox;
+		cell.$cell.empty().append($listbox);
 	}
 
 	/**
 	 * get value from cell's editor;  this callback called when finished editing of row
-	 * @param {jQuery} $cell cell, i.e. <td> tag
-	 * @return {mixed}
+	 * @param {Steel__GridCell} cell
+	 * @param {Steel__Grid} grid
+	 * @return {*}
 	 */
-	customGetEditorValueImplementation($cell, grid){
-		let listbox = $cell.data('sb_listbox');
-		return listbox.getSelectedValue();
+	customGetEditorValueImplementation(cell){
+		return cell.sb_listbox ? cell.sb_listbox.getSelectedValue() : null;
 	}
 
-
 }
-Steel.GridColumnSettingsEditorListbox = Steel__GridColumnSettingsEditorListbox;
+window.Steel__GridColumnSettingsEditorListbox = Steel__GridColumnSettingsEditorListbox;
 
 
 
@@ -212,20 +231,15 @@ class Steel__GridColumnSettingsEditorTextarea extends Steel__GridColumnSettings{
 
 	/**
 	 * custom rendering of cell in row in , i.e. <td> tag
-	 * @param {jQuery} $cell cell, rendered by default
+	 * @param {Steel__GridCell} cell
 	 * @param {string} val cell value
 	 * @param {Steel__Grid} grid
-	 * @param {Steel__GridRow} row
-	 * @param {Steel__GridColumn} column
 	 * @param {boolean} isEditing
-	 * @return {jQuery} modified (or not) $cell, i.e. <td> tag
 	 */
-	customRenderCellImplementation($cell, val, grid, row, column, isEditing)
+	customRenderCellImplementation(cell, val, grid, isEditing)
 	{
-		if(!isEditing || column.isReadOnly){
-			var valNew = (""+(val!=null?val:"")).replace(new RegExp('\\n', 'g'),'<br>\n');
-			$cell.html(valNew);
-			return $cell;
+		if(!isEditing || cell.column.isReadOnly){
+			return;
 		}
 		//<input type="text" class="sg_cellEditor" sg_celleditortype="TEXT">
 		var $editor = $('<textarea></textarea>');
@@ -234,12 +248,11 @@ class Steel__GridColumnSettingsEditorTextarea extends Steel__GridColumnSettings{
 			'class':"sg_cellEditor",
 			sg_celleditortype: "TEXT"
 		});
-		$cell.empty().append($editor);
+		cell.$cell.empty().append($editor);
 
-		return $cell;
 	}
 }
-Steel.GridColumnSettingsEditorTextarea = Steel__GridColumnSettingsEditorTextarea;
+window.Steel__GridColumnSettingsEditorTextarea = Steel__GridColumnSettingsEditorTextarea;
 
 
 
@@ -250,7 +263,7 @@ class Steel__GridColumnSettingsActionEdit extends Steel__GridColumnSettings{
 
 		this.cellEditorType = Steel__ENUM_CELL_EDITOR_TYPE.NOT_EDITABLE;
 
-		this.title = 'Edit';
+		this.title = 'Редакт.';
 		this.name = '-edit';
 		this.isSortable = false;
 		this.width = 52;
@@ -265,22 +278,19 @@ class Steel__GridColumnSettingsActionEdit extends Steel__GridColumnSettings{
 	}
 
 	/**
-	 * rendering cell with `Edit` or `Appy`/`Cancel` buttons
+	 * rendering cell with `Edit` or `Apply`/`Cancel` buttons
 	 *
-	 * @param {jQuery} $elem cell, rendered by default
+	 * @param {Steel__GridCell} cell
 	 * @param {string} val cell value
 	 * @param {Steel__Grid} grid
-	 * @param {Steel__GridRow} row
-	 * @param {Steel__GridColumn} column
 	 * @param {boolean} isEditing
-	 * @return {jQuery} modified (or not) $cell, i.e. <td> tag
 	 */
-	customRenderCellImplementation($elem, val, grid, row, column, isEditing) {
+	customRenderCellImplementation(cell, val, grid, isEditing) {
 		let $bp = $('<div class="sg_buttonsEditParent"></div>');
 
 		if (!isEditing) {
 			let $buttonEditStart = $('<div class="sg_button sg_buttonEditStart" title="Изменить"></div>');
-			$buttonEditStart.click(function(){ grid.doEditStart(row); });
+			$buttonEditStart.click(function(){ grid.doEditStart(cell.row); });
 			$bp.append($buttonEditStart);
 		}
 		else{
@@ -292,14 +302,12 @@ class Steel__GridColumnSettingsActionEdit extends Steel__GridColumnSettings{
 			$bp.append([$buttonEditApply, $buttonEditCancel]);
 		}
 
+		cell.$cell.empty().append($bp);
 
-		$elem.empty().append($bp);
-
-		return $elem;
 	}
 
 }
-Steel.GridColumnSettingsActionEdit = Steel__GridColumnSettingsActionEdit;
+window.Steel__GridColumnSettingsActionEdit = Steel__GridColumnSettingsActionEdit;
 
 
 class Steel__GridColumnSettingsActionDelete extends Steel__GridColumnSettings{
@@ -307,7 +315,7 @@ class Steel__GridColumnSettingsActionDelete extends Steel__GridColumnSettings{
 		super();
 
 
-		this.title = 'Delete';
+		this.title = 'Удалить';
 		this.name = '-delete';
 		this.isSortable = false;
 		this.width = 40;
@@ -323,22 +331,18 @@ class Steel__GridColumnSettingsActionDelete extends Steel__GridColumnSettings{
 	/**
 	 * rendering cell with `Edit` or `Appy`/`Cancel` buttons
 	 *
-	 * @param {jQuery} $elem cell, rendered by default
+	 * @param {Steel__GridCell} cell
 	 * @param {string} val cell value
 	 * @param {Steel__Grid} grid
-	 * @param {Steel__GridRow} row
-	 * @param {Steel__GridColumn} column
 	 * @param {boolean} isEditing
-	 * @return {jQuery} modified (or not) $cell, i.e. <td> tag
 	 */
-	customRenderCellImplementation($elem, val, grid, row, column, isEditing) {
+	customRenderCellImplementation(cell, val, grid, isEditing) {
 		let $button = $('<div class="sg_button sg_actionDelete" title="Delete"></div>');
-		$button.click(function(){ grid.doDelete(row); });
-		$elem.empty().append($button);
-		return $elem;
+		$button.click(function(){ grid.doDelete(cell.row); });
+		cell.$cell.empty().append($button);
 	}
 }
-Steel.GridColumnSettingsActionDelete = Steel__GridColumnSettingsActionDelete;
+window.Steel__GridColumnSettingsActionDelete = Steel__GridColumnSettingsActionDelete;
 
 
 
@@ -406,7 +410,7 @@ class Steel__GridColumn extends Steel__Component {
 				break;
 			}
 		}
-		if(!res) res = Steel__ENUM_CELL_EDITOR_TYPE.TEXT_STRING;
+		if(!res) res = Steel__ENUM_CELL_EDITOR_TYPE.TEXT;
 		return res;
 	}
 
@@ -416,20 +420,19 @@ class Steel__GridColumn extends Steel__Component {
 		return t;
 	}
 }
-Steel.GridColumn = Steel__GridColumn;
+window.Steel__GridColumn = Steel__GridColumn;
 
 
 
-class Steel__PacketInGridAfterFetch  extends Steel__PacketInDataProviderFetch{
+class Steel__PacketServerGridAfterFetch  extends Steel__PacketServerDataProviderFetch{
 
 	constructor(props){
 		super();
 
-		this.operation = Steel.ENUM_PACKET_RESPONSE_OPERATION.AFTER_FETCH;
+		this.operation = Steel.ENUM_PACKET_SERVER_OPERATION.AFTER_FETCH;
 
 		this.totalRows = 0;
 		this.offset = 0;
-
 
 		/** @var string[] column names on wich was sorting */
 		this.sorting = [];
@@ -437,14 +440,15 @@ class Steel__PacketInGridAfterFetch  extends Steel__PacketInDataProviderFetch{
 		if(props) this.applyProperties(props);
 	}
 };
-Steel.PacketInGridAfterFetch = Steel__PacketInGridAfterFetch;
+window.Steel__PacketServerGridAfterFetch = Steel__PacketServerGridAfterFetch;
 
 
-class Steel__PacketInGridAfterInsertId extends Steel__PacketInDataProvider{
+
+class Steel__PacketServerGridAfterInsertId extends Steel__PacketServerDataProvider{
 
 	constructor(props){
 		super();
-		this.operation = Steel.ENUM_PACKET_RESPONSE_OPERATION.AFTER_INSERT_ID;
+		this.operation = Steel.ENUM_PACKET_SERVER_OPERATION.AFTER_INSERT_ID;
 
 		/** @var mixed example: 5492 */
 		this.keyValue = null;
@@ -452,14 +456,14 @@ class Steel__PacketInGridAfterInsertId extends Steel__PacketInDataProvider{
 		if(props) this.applyProperties(props);
 	}
 };
-Steel.PacketInGridAfterInsertId = Steel__PacketInGridAfterInsertId;
+window.Steel__PacketServerGridAfterInsertId = Steel__PacketServerGridAfterInsertId;
 
 
-class Steel__PacketInGridAfterUpdate extends Steel__PacketInDataProvider{
+class Steel__PacketServerGridAfterUpdate extends Steel__PacketServerDataProvider{
 
 	constructor(props){
 		super();
-		this.operation = Steel.ENUM_PACKET_RESPONSE_OPERATION.AFTER_UPDATE;
+		this.operation = Steel.ENUM_PACKET_SERVER_OPERATION.AFTER_UPDATE;
 
 		this.keyValue = null;
 
@@ -469,28 +473,28 @@ class Steel__PacketInGridAfterUpdate extends Steel__PacketInDataProvider{
 		if(props) this.applyProperties(props);
 	}
 };
-Steel.PacketInGridAfterUpdate = Steel__PacketInGridAfterUpdate;
+window.Steel__PacketServerGridAfterUpdate = Steel__PacketServerGridAfterUpdate;
 
 
-class Steel__PacketInGridAfterDelete extends Steel__PacketInDataProvider{
+class Steel__PacketServerGridAfterDelete extends Steel__PacketServerDataProvider{
 
 	constructor(props){
 		super();
-		this.operation = Steel.ENUM_PACKET_RESPONSE_OPERATION.AFTER_DELETE;
+		this.operation = Steel.ENUM_PACKET_SERVER_OPERATION.AFTER_DELETE;
 
 		this.keyValue = null;
 
 		if(props) this.applyProperties(props);
 	}
 };
-Steel.PacketInGridAfterDelete = Steel__PacketInGridAfterDelete;
+window.Steel__PacketServerGridAfterDelete = Steel__PacketServerGridAfterDelete;
 
 
-class Steel__PacketOutGridFetch extends Steel__PacketOutDataProvider{
+class Steel__PacketClientGridFetch extends Steel__PacketClientDataProvider{
 
 	constructor(props){
 		super();
-		this.operation = Steel.ENUM_PACKET_REQUEST_OPERATION.FETCH;
+		this.operation = Steel.ENUM_PACKET_CLIENT_OPERATION.FETCH;
 
 		/** @var string[]|null */
 		this.fieldsNeed = null;
@@ -502,14 +506,14 @@ class Steel__PacketOutGridFetch extends Steel__PacketOutDataProvider{
 		this.sorting = [];
 
 
-		/** @var mixed[] example: [ 'or', ['like','name','Pooh'], ['>=','cost', 32213.3], ['in', [1,3,55] ] ] */
+		/** @var mixed[] example: [ 'or', ['contains','name','Pooh'], ['>=','cost', 32213.3], ['in', [1,3,55] ] ] */
 		this.filters = [];
 
 		if(props) this.applyProperties(props);
 	}
 
 	/**
-	 * @param {Steel__PacketOutGridFetch} packet
+	 * @param {Steel__PacketClientGridFetch} packet
 	 * @return Steel__DataProviderField[]
 	 */
 	generateDataProviderFieldsBy(packet){
@@ -517,50 +521,117 @@ class Steel__PacketOutGridFetch extends Steel__PacketOutDataProvider{
 
 	}
 }
-Steel.PacketOutGridFetch = Steel__PacketOutGridFetch;
+window.Steel__PacketClientGridFetch = Steel__PacketClientGridFetch;
 
 
-class Steel__PacketOutGridInsertId extends Steel__PacketOutDataProvider{
+class Steel__PacketClientGridInsertId extends Steel__PacketClientDataProvider{
 
 	constructor(){
 		super();
-		this.operation = Steel.ENUM_PACKET_REQUEST_OPERATION.INSERT_ID;
+		this.operation = Steel.ENUM_PACKET_CLIENT_OPERATION.INSERT_ID;
 
 		// no params
 	}
 }
-Steel.PacketOutGridInsertId = Steel__PacketOutGridInsertId;
+window.Steel__PacketClientGridInsertId = Steel__PacketClientGridInsertId;
 
 
-class Steel__PacketOutGridUpdate extends Steel__PacketOutDataProvider{
+class Steel__PacketClientGridUpdate extends Steel__PacketClientDataProvider{
 
 	constructor(props){
 		super();
-		this.operation = Steel.ENUM_PACKET_REQUEST_OPERATION.UPDATE;
+		this.operation = Steel.ENUM_PACKET_CLIENT_OPERATION.UPDATE;
 
 		this.keyValue = null;
 
-		/** @var mixed[]|null example: {'cost':32.32} */
+		/** @var *[]|null example: {'cost':32.32} */
 		this.columnValues = null;
 
 		if(props) this.applyProperties(props);
 	}
 }
-Steel.PacketOutGridUpdate = Steel__PacketOutGridUpdate;
+window.Steel__PacketClientGridUpdate = Steel__PacketClientGridUpdate;
 
 
-class Steel__PacketOutGridDelete extends Steel__PacketOutDataProvider{
+class Steel__PacketClientGridDelete extends Steel__PacketClientDataProvider{
 
 	constructor(props){
 		super();
-		this.operation = Steel.ENUM_PACKET_REQUEST_OPERATION.DELETE;
+		this.operation = Steel.ENUM_PACKET_CLIENT_OPERATION.DELETE;
 
 		this.keyValue = null;
 
 		if(props) this.applyProperties(props);
 	}
 }
-Steel.PacketOutGridDelete = Steel__PacketOutGridDelete;
+window.Steel__PacketClientGridDelete = Steel__PacketClientGridDelete;
+
+
+class Steel__GridCell extends Steel__Component
+{
+	constructor(props)
+	{
+		super();
+
+		/** @var {Steel__GridRow} */
+		this.row = null;
+
+		/** @var {jQuery} */
+		this.$cell = null;
+
+		/** @var {Steel__GridColumn} */
+		this.column = null;
+
+		this.applyProperties(props);
+
+
+		if(props) this.applyProperties(props);
+	}
+
+	/** default implementation */
+	getEditorValue(cell){
+		let $editor = cell.$cell.find('.sg_cellEditor');
+
+		let valMixed = $editor.length ? $editor.val() : '';
+
+
+		//return Steel__Grid.convertValueToFieldDataType(valMixed, this.column.field);
+		return valMixed;
+	}
+
+	/**
+	 * @param {function(*, *)} handler when editor value changes, handler(event, newValue) called
+	 * @returns {string} eventUid for unregister
+	 */
+	registerOnEditorValueChanged(handler){
+		var eventUid = 'Steel__GridCell:EditorValueChanged.UID'+Math.floor(Math.random()*100000000000);
+		this.$cell.on(eventUid,handler);
+		return eventUid;
+	}
+
+	unregisterOnEditorValueChanged(eventUid){
+		return this.$cell.off(eventUid);
+	}
+
+	emmitOnEditorValueChanged(newValue){
+		this.$cell.trigger('Steel__GridCell:EditorValueChanged',newValue);
+	}
+
+	setupEvents(){
+		let prevValue = this.getEditorValue(this);
+		let _ = this;
+		this.$cell.find('.sg_cellEditor').on('keypress',//'change paste keyup input propertychange',
+			function(e){
+				if(e.which != 13) return;
+				let newValue = _.getEditorValue(_);
+				if(newValue == prevValue) return;
+				prevValue = newValue;
+				_.emmitOnEditorValueChanged(newValue);
+			}
+		);
+	}
+
+}
 
 
 class Steel__GridRow extends Steel__Component {
@@ -571,7 +642,13 @@ class Steel__GridRow extends Steel__Component {
 		this.$row = null;
 
 		/** @var {array} */
-		this.rowData = null;
+		this.rowData = [];
+
+		/** @var {bool} */
+		this.isEditing = false;
+
+		/** @var {Steel__GridCell[]} */
+		this.cells = [];
 
 		this.applyProperties(props);
 	}
@@ -602,6 +679,7 @@ class Steel__GridSettings extends Steel__Component{
 		this.enabledEdit = true;
 		this.enabledInsert = true;
 		this.enabledDelete = true;
+		this.enableFilter = true;
 
 		this.isColumnsAutogenerated = true;
 
@@ -612,6 +690,9 @@ class Steel__GridSettings extends Steel__Component{
 		this.columnsSettings = [];
 		/** @var {Steel__GridColumnSettings[string]} */
 		this.columnsSettingsByName = {};
+
+		/** @var {*[][]} compatible with Qb_filter format; example: [ ['name','CONTAINS','Pooh','AND'], ['cost','GREATER_THAN_OR_EQUAL',32213.3,'AND'], ['id','IN', [1,3,55], 'AND' ] ]  */
+		this.filters = [];
 
 
 
@@ -682,7 +763,7 @@ class Steel__GridSettings extends Steel__Component{
 
 
 }
-Steel.GridSettings = Steel__GridSettings;
+window.Steel__GridSettings = Steel__GridSettings;
 
 
 
@@ -710,9 +791,9 @@ class Steel__Grid extends Steel__IDataReceiver{
 		this.keyFieldName = null;
 
 		/** @var Steel__DataProviderField[] */
-		this.fieldsAvaliable = [];
+		this.fieldsAvailable = [];
 		/** @var Steel__DataProviderField[string] */
-		this.fieldsAvaliableByName = {};
+		this.fieldsAvailableByName = {};
 
 		this.offset = 0;
 
@@ -744,6 +825,11 @@ class Steel__Grid extends Steel__IDataReceiver{
 
 		/** @var {Steel__GridRow[]} */
 		this.rows = null;
+
+		/** @var {Steel__GridRow[]} poor-man's filter... like ordinary row in edit mode */
+		this.filterRow = null;
+
+
 
 	}
 
@@ -777,14 +863,14 @@ class Steel__Grid extends Steel__IDataReceiver{
 
 		this.initIfNeed();
 
-		this.checkColumnsAvaliableChanges(null);
+		this.checkColumnsAvailableChanges(null);
 
 		//this.renderWhatNeed();
 	}
 
 
 	packetFetchMake(){
-		let packet = new Steel__PacketOutGridFetch();
+		let packet = new Steel__PacketClientGridFetch();
 
 		/** @var string[]|null */
 		packet.columnsNeed = this.columnsByName ? Object.keys(this.columnsByName) : [];
@@ -795,7 +881,7 @@ class Steel__Grid extends Steel__IDataReceiver{
 		packet.sorting = this.settings.sorting;
 
 		/** @var mixed[] example: [ 'or', ['like','name','Pooh'], ['>=','cost', 32213.3], ['in', [1,3,55] ] ] */
-		packet.filters = [];
+		packet.filters = this.settings.filters;
 		return packet;
 	}
 
@@ -809,9 +895,9 @@ class Steel__Grid extends Steel__IDataReceiver{
 		this.columns = [];
 
 		if(this.settings.isColumnsAutogenerated){
-			if(this.fieldsAvaliable){
-				for(let i=0; i<this.fieldsAvaliable.length; i++){
-					let f = this.fieldsAvaliable[i];
+			if(this.fieldsAvailable){
+				for(let i=0; i<this.fieldsAvailable.length; i++){
+					let f = this.fieldsAvailable[i];
 					let col = new Steel__GridColumn();
 					col.name = f.name;
 					col.field = f;
@@ -835,7 +921,7 @@ class Steel__Grid extends Steel__IDataReceiver{
 		this.columnsByNameReindex();
 
 
-		if(this.settings.enabledDelete) {
+		if(this.settings.enabledEdit) {
 			let cs = this.settings.columnsSettingsByName['-edit'];
 			if(!cs){
 				cs = new Steel__GridColumnSettingsActionEdit();
@@ -874,7 +960,7 @@ class Steel__Grid extends Steel__IDataReceiver{
 		this.$header = $('<thead class="sg_header"></thead>');
 		this.$body = $('<tbody></tbody>');
 		this.$footer = $('<tfoot class="sg_footer"><tr><td class="sg_pageNavigation" colspan="999">'+
-			(this.settings.enabledInsert ? '<div class="sg_button sg_buttonInsert">+</div>' : '')+
+			(this.settings.enabledInsert ? '<div class="sg_button sg_buttonInsert">Добавить</div>' : '')+
 			'<div class="sg_button sg_buttonPageFirst"></div>  <div class="sg_button sg_buttonPageLeft"></div> <div class="sg_buttonsPages"></div> <div class="sg_button sg_buttonPageRight"></div>  <div class="sg_button sg_buttonPageLast"></div>'+
 			'<div class="sg_totalsInfo">+</div></td></tr></tfoot>');
 		this.$pageNavigation = this.$footer.find('.sg_pageNavigation');
@@ -955,15 +1041,19 @@ class Steel__Grid extends Steel__IDataReceiver{
 
 		if(this.needRender.header){
 			this.renderHeader();
+			this.needRender.header = false;
 		}
 
 		if(this.needRender.pageNavigation){
 			this.refreshPageNavigation();
+			this.needRender.pageNavigation = false;
 		}
 
 		if(this.needRender.body){
 			this.renderBody();
+			this.needRender.body = false;
 		}
+
 	}
 
 	renderBody(){
@@ -977,11 +1067,14 @@ class Steel__Grid extends Steel__IDataReceiver{
 		for(let i=0; i<this.rowsData.length; i++){
 			let rowData = this.rowsData[i];
 			let row = new Steel__GridRow({rowData:rowData});
-			row.$row = $('<tr class="sg_tr"></tr>');
-			row.$row.data('Steel__GridRow', row);
 			let isEditing = this.isInsertIdMode && (rowData[this.keyFieldName] == this.insertIdModeKeyValue);
-			if(isEditing) this.isEditing = true;
+			if(isEditing){
+				this.isEditing = true;
+				this.currentRow = row;
+			}
+			row.$row = $('<tr class="sg_tr"></tr>');
 			this.renderRowContent(row, isEditing);
+
 			$rows.push(row.$row);
 			this.rows.push(row);
 		}
@@ -992,28 +1085,33 @@ class Steel__Grid extends Steel__IDataReceiver{
 
 	/**
 	 *
-	 * @param {Steel__GridColumn} col
+	 * @param {Steel__GridCell} cell
 	 * @param {string} cellValue
 	 * @param {bool} isEditing
-	 * @return {jQuery} cell, i.e. `<td>` with inner content
+	 * @param {bool} isFilterRow  do we rendering poor-man's filter?
 	 */
-	renderCellDefault(col, cellValue, isEditing)
+	static renderCellDefault(cell, cellValue, isEditing, isFilterRow)
 	{
+		let col = cell.column;
 
 		let dataType = col.field ? col.field.dataType : null;
 		if(!dataType) dataType = Steel.ENUM_PROVIDER_DATA_TYPE.STRING
 
-		let format = col.settings ? col.settings.mormat : '';
+		let format = col.settings ? col.settings.format : '';
 
 		let $cell = $('<td class="sg_cell"></td>');
 		$cell.attr('sg_columnName', col.name);
+		cell.$cell = $cell;
 
 		if(col.settings && col.settings.attributesAdditional){
 			$cell.attr(col.settings.attributesAdditional);
 		}
 
-		let isFieldReadOnly = col.field ? col.field.isReadOnly: 0;
+		let isFieldReadOnly = col.field ? (col.field.isReadOnly && !isFilterRow) : 0;
 
+		if(isFilterRow && dataType == Steel.ENUM_PROVIDER_DATA_TYPE.TIMESTAMP){
+			//isFieldReadOnly = true; // editing it with filterRow not makes sense anyway
+		}
 
 
 		if(isEditing && !isFieldReadOnly){
@@ -1026,11 +1124,10 @@ class Steel__Grid extends Steel__IDataReceiver{
 
 
 
-
 			let attributes = {
-				class: 'sg_cellEditor',
+				"class": 'sg_cellEditor',
 				value: cellValue,
-				sg_cellEditorType: cellEditorType,
+				sg_cellEditorType: cellEditorType
 			};
 
 
@@ -1043,6 +1140,17 @@ class Steel__Grid extends Steel__IDataReceiver{
 					break;
 				case Steel__ENUM_CELL_EDITOR_TYPE.DATE:
 					$editor.attr({type: 'date'});
+					{
+						let prevValue = cellValue;
+						$editor.on('change',
+							function(e){
+								let newValue = cell.getEditorValue(cell);
+								if(newValue == prevValue) return;
+								prevValue = newValue;
+								cell.emmitOnEditorValueChanged(newValue);
+							}
+						);
+					}
 					break;
 				case Steel__ENUM_CELL_EDITOR_TYPE.DATETIME_LOCAL:
 					$editor.attr({type: 'datetime-local'});
@@ -1056,18 +1164,18 @@ class Steel__Grid extends Steel__IDataReceiver{
 				case Steel__ENUM_CELL_EDITOR_TYPE.NUMBER_DOUBLE:
 					$editor.attr({type: 'number', step:'0.000000000001'});
 					break;
-				case Steel__ENUM_CELL_EDITOR_TYPE.LISTBOX:
+				/*case Steel__ENUM_CELL_EDITOR_TYPE.LISTBOX:
 					$editor = $('<select>').attr(attributes);
-					if(col.settings && col.settings.listDataPrivider){
+					if(col.settings && col.settings.listDataProvider){
 
 						let receiver = new Steel__IDataReceiver();
-						receiver.onDataReceived = function(){
+						receiver.onDataReceived = function() {
 
-						}
-						col.settings.listDataPrivider.request([])
+						};
+						col.settings.listDataProvider.request([])
 					}
 
-					break;
+					break;*/
 				case Steel__ENUM_CELL_EDITOR_TYPE.TEXT:
 				default:
 					$editor.attr({type: 'text'});
@@ -1076,54 +1184,53 @@ class Steel__Grid extends Steel__IDataReceiver{
 
 			$editor.attr(attributes);
 
-
 			$cell.append($editor);
-
-
 		}
 
 		else{  // not editing
 
 			let cellValueFormatted = cellValue; // TODO: do actual formatting
 
+
 			let $val = cellValueFormatted;
 
+			$val = (""+($val!=null?$val:"")).replace(new RegExp('\\n', 'g'),'<br>\n');
+
+
+
+
 			switch(dataType){
-				case Steel__ENUM_CELL_EDITOR_TYPE.CHECKBOX:
-					$val = $('<item type="checkbox">');
+				case Steel__ENUM_PROVIDER_DATA_TYPE.BOOL:
+					$val = $('<input type="checkbox" disabled>');
 					if(cellValue)
 						$val.attr('checked','checked');
 					break;
-				case Steel__ENUM_CELL_EDITOR_TYPE.COLOR:
-					$val = $('<div></div>');
-					$val.css({display:'inline-block', width:"40px",height:"16px","backround-color":cellValue});
-					break;
-				case Steel__ENUM_CELL_EDITOR_TYPE.DATE:
+				//case Steel__ENUM_CELL_EDITOR_TYPE.COLOR:
+				//	$val = $('<div></div>');
+				//	$val.css({display:'inline-block', width:"40px",height:"16px","backround-color":cellValue});
+				//	break;
+				case Steel__ENUM_PROVIDER_DATA_TYPE.TIMESTAMP:
 					if(!cellValue) {
 						$val = '';
 					}
 					else{
-						$val = new Date(cellValue).toLocaleDateString();
-					}
-					break;
-				case Steel__ENUM_CELL_EDITOR_TYPE.DATETIME_LOCAL:
-					if(!cellValue) {
-						$val = '';
-					}
-					else{
-						let d = new Date(cellValue);
+						let d = new Date(cellValue*1000);
 						$val = d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
 					}
 					break;
 				case Steel__ENUM_CELL_EDITOR_TYPE.LISTBOX:
 					//  <--- this will be done at:  Steel__GridColumnSettingsEditorListbox.customRenderCellImplementation()
 					break;
+				case Steel__ENUM_PROVIDER_DATA_TYPE.DOUBLE:
+				case Steel__ENUM_PROVIDER_DATA_TYPE.INT:
+				case Steel__ENUM_PROVIDER_DATA_TYPE.STRING:
+					// as-is
+					break;
 			}
 
 
-			$cell.append(cellValueFormatted);
+			$cell.append($val);
 		}
-		return $cell;
 
 	}
 
@@ -1133,6 +1240,8 @@ class Steel__Grid extends Steel__IDataReceiver{
 	 */
 	renderRowContent(row, isEditing)
 	{
+		row.$row.data('Steel__GridRow', row);
+		row.cells.length = 0;
 		row.$row.empty();
 		row.$row.toggleClass('sg_rowEditing', isEditing);
 
@@ -1143,14 +1252,22 @@ class Steel__Grid extends Steel__IDataReceiver{
 				val = row.rowData[col.name];
 			}
 
-			let $cell = this.renderCellDefault(col, val, isEditing);
+			let cell = new Steel__GridCell({row: row, column: col});
+			row.cells.push(cell);
+
+			if (col.settings && col.settings.customGetEditorValue) {
+				cell.getEditorValue = col.settings.customGetEditorValue;
+			}
+
+			Steel__Grid.renderCellDefault(cell, val, isEditing);
 
 
 			if (col.settings && col.settings.customRenderCell) {
-				$cell = col.settings.customRenderCell($cell, val, this, row, col, isEditing);
+				col.settings.customRenderCell(cell, val, this, isEditing);
 			}
+			cell.setupEvents();
 
-			row.$row.append($cell);
+			row.$row.append(cell.$cell);
 		}
 	}
 
@@ -1205,8 +1322,152 @@ class Steel__Grid extends Steel__IDataReceiver{
 		}
 
 		this.$header.append($tr);
+
+		if(this.settings.enableFilter){
+			this.renderHeaderFilter();
+		}
 	}
 
+	/**
+	 *
+	 * @param {Steel__GridRow} filterRow
+	 * @returns {*}
+	 */
+	generateFiltersByFilterRow(filterRow){
+
+		/** @var mixed[][] compatible with Qb_filter format; example: [ ['name','CONTAINS','Pooh','AND'], ['cost','GREATER_THAN_OR_EQUAL',32213.3,'AND'], ['id','IN', [1,3,55], 'AND' ] ]  */
+		let filters = [];
+
+		let colNames = Object.getOwnPropertyNames(filterRow.rowData);
+		for(let i=0; i<colNames.length; i++){
+			let colName = colNames[i];
+			let col = this.columnsByName[colName];
+			if(!col) continue;
+			let val = filterRow.rowData[colName];
+
+			let dataType = col.field ? col.field.dataType : null;
+			if(dataType==null) dataType = Steel__ENUM_PROVIDER_DATA_TYPE.STRING;
+
+			let filter =[
+				colName,
+				Steel__ENUM_FILTER_CONDITION.CONTAINS,
+				val,
+				Steel__ENUM_FILTER_PREFIX.AND
+			];
+
+			console.log(val);
+
+			if(col.settings && col.cellEditorType ==  Steel__ENUM_CELL_EDITOR_TYPE.DATE){
+				if(val=='')continue;
+				var dtFrom = (new Date(val))/1000 + new Date().getTimezoneOffset()*60;
+				var dtTo = dtFrom + 24*60*60;
+				filters.push([colName, Steel__ENUM_FILTER_CONDITION.GREATER_THAN_OR_EQUAL, dtFrom, Steel__ENUM_FILTER_PREFIX.AND]);
+				filters.push([colName, Steel__ENUM_FILTER_CONDITION.LESS_THAN, dtTo, Steel__ENUM_FILTER_PREFIX.AND]);
+				continue;
+			}
+
+			switch(dataType){
+				case Steel__ENUM_PROVIDER_DATA_TYPE.INT:
+				case Steel__ENUM_PROVIDER_DATA_TYPE.DOUBLE:
+				case Steel__ENUM_PROVIDER_DATA_TYPE.TIMESTAMP:
+					filter[1] = Steel__ENUM_FILTER_CONDITION.EQUAL;
+					if(val == '') {
+						filter = null;
+						break;
+					}
+					if((''+val).toLowerCase() == 'null'){
+						filter[2] = null;
+						break;
+					}
+					val = parseFloat(val);
+					if(isNaN(val) ){
+						filter = null;
+						break;
+					}
+					filter[2] = val;
+					break;
+				case Steel__ENUM_PROVIDER_DATA_TYPE.STRING:
+				default:
+					// already done
+			}
+			if(filter)
+				filters.push(filter);
+
+
+		}
+		return filters;
+	}
+
+	/**
+	 *
+	 * @param {Steel__GridCell} cell
+	 * @param {*} newValue - not necessary in correct field type!
+	 */
+	onFilterValueChanged(cell, newValue){
+
+		// value not necessary in correct field type!
+		this.filterRow.rowData[cell.column.name] = newValue;
+		this.settings.filters = this.generateFiltersByFilterRow(this.filterRow);
+
+		/** @var mixed[][] compatible with Qb_filter format; example: [ ['name','CONTAINS','Pooh','AND'], ['cost','GREATER_THAN_OR_EQUAL',32213.3,'AND'], ['id','IN', [1,3,55], 'AND' ] ]  */
+		this.fetchData();
+	}
+
+	renderHeaderFilter(){
+
+
+		let row = new Steel__GridRow();
+		this.filterRow = row;
+		row.$row = $("<tr></tr>").addClass('sg_rowEditing');
+		row.$row.data('Steel__GridRow', row);
+
+
+		for(let i=0; i<this.columns.length; i++) {
+			let col = this.columns[i];
+
+			let cell = new Steel__GridCell({row: row, column: col});
+			row.cells.push(cell);
+
+			let isEditor = !!col.field;
+
+			if(!isEditor){
+				cell.$cell = $('<td></td>');
+			}
+			else {
+				if (col.settings && col.settings.customGetEditorValue) {
+					cell.getEditorValue = col.settings.customGetEditorValue;
+				}
+
+				let val = '';
+				if (col.name in row.rowData) {
+					val = row.rowData[col.name];
+				}
+				Steel__Grid.renderCellDefault(cell, val, true, true);
+
+				if (col.settings && col.settings.customRenderCell) {
+					col.settings.customRenderCell(cell, '', this, true);
+				}
+
+				cell.setupEvents();
+
+				let _ = this;
+				let func = (function (cell_) {
+					return function (e, newValue) {
+						_.onFilterValueChanged(cell_, newValue);
+					}
+				})(cell);
+				cell.registerOnEditorValueChanged(func);
+
+
+			}
+
+			cell.$cell.addClass('sg_filter');
+			cell.$cell.attr({sg_columnName: col.name});
+			row.$row.append(cell.$cell);
+		}
+
+		this.$header.append(row.$row);
+	}
 
 	refreshPageNavigation(){
 
@@ -1231,7 +1492,7 @@ class Steel__Grid extends Steel__IDataReceiver{
 
 
 	/**
-	 * @param {Steel__PacketInDataProvider[]} packets
+	 * @param {Steel__PacketServerDataProvider[]} packets
 	 */
 	onDataReceived(packets){
 		this.initIfNeed();
@@ -1242,19 +1503,19 @@ class Steel__Grid extends Steel__IDataReceiver{
 			let packet = packets[i];
 
 			switch(packet.operation){
-				case Steel.ENUM_PACKET_RESPONSE_OPERATION.AFTER_FETCH:
+				case Steel.ENUM_PACKET_SERVER_OPERATION.AFTER_FETCH:
 					this.onPacketReceivedAfterFetch(packet);
 					break;
-				case Steel.ENUM_PACKET_RESPONSE_OPERATION.AFTER_INSERT_ID:
+				case Steel.ENUM_PACKET_SERVER_OPERATION.AFTER_INSERT_ID:
 					this.onPacketReceivedAfterInsertId(packet);
 					break;
-				case Steel.ENUM_PACKET_RESPONSE_OPERATION.ERROR:
+				case Steel.ENUM_PACKET_SERVER_OPERATION.ERROR:
 					throw packet;
 					break;
-				case Steel.ENUM_PACKET_RESPONSE_OPERATION.AFTER_DELETE:
+				case Steel.ENUM_PACKET_SERVER_OPERATION.AFTER_DELETE:
 					this.onPacketReceivedAfterDelete(packet);
 					break;
-				case Steel.ENUM_PACKET_RESPONSE_OPERATION.AFTER_UPDATE:
+				case Steel.ENUM_PACKET_SERVER_OPERATION.AFTER_UPDATE:
 					this.onPacketReceivedAfterUpdate(packet);
 					break;
 
@@ -1269,26 +1530,29 @@ class Steel__Grid extends Steel__IDataReceiver{
 
 
 	/**
-	 * @param {Steel__PacketInGridAfterFetch} packet
+	 * @param {Steel__PacketServerGridAfterFetch} packet
 	 */
 	onPacketReceivedAfterFetch(packet){
 		this.initIfNeed();
 
 		this.columnsByNameReindex();
 
-		if(!packet.fieldsAvaliable){
-			Steel__PacketInDataProviderFetch.generateFieldsAvaliableByRows(packet);
+		if(!packet.fieldsAvailable){
+			Steel__PacketServerDataProviderFetch.generateFieldsAvailableByRows(packet);
 		}
 
-		this.fieldsAvaliableUpdate(packet.fieldsAvaliable);
+		this.fieldsAvailableUpdate(packet.fieldsAvailable);
 
 		this.rowsData = packet.rows;
 		this.totalRows = packet.totalRows;
 		this.keyFieldName = packet.keyFieldName;
-		this.settings.sorting = packet.sorting || [];
 
+		let newSorting = packet.sorting || [];
+		if(JSON.stringify(this.settings.sorting) != JSON.stringify(newSorting) ){
+			this.settings.sorting = newSorting;
+			this.needRender.header = true;
+		}
 
-		this.needRender.header = true; // sorting can change
 		this.needRender.body = true;
 		this.needRender.pageNavigation = true;
 
@@ -1298,7 +1562,7 @@ class Steel__Grid extends Steel__IDataReceiver{
 	}
 
 	/**
-	 * @param {Steel__PacketInGridAfterInsertId} packet
+	 * @param {Steel__PacketServerGridAfterInsertId} packet
 	 */
 	onPacketReceivedAfterInsertId(packet){
 		this.isInsertIdMode = true;
@@ -1307,14 +1571,14 @@ class Steel__Grid extends Steel__IDataReceiver{
 	}
 
 	/**
-	 * @param {Steel__PacketInGridAfterDelete} packet
+	 * @param {Steel__PacketServerGridAfterDelete} packet
 	 */
 	onPacketReceivedAfterDelete(){
 		// nothing to do here
 	}
 
 	/**
-	 * @param {Steel__PacketInGridAfterUpdate} packet
+	 * @param {Steel__PacketServerGridAfterUpdate} packet
 	 */
 	onPacketReceivedAfterUpdate(packet){
 		// refresh row
@@ -1344,7 +1608,7 @@ class Steel__Grid extends Steel__IDataReceiver{
 		let col = new Steel__GridColumn();
 		col.name = name;
 		col.settings = this.settings.columnsSettingsByName[name];
-		col.field = this.fieldsAvaliableByName[name];
+		col.field = this.fieldsAvailableByName[name];
 		this.columns.push(col);
 		this.columnsByName[name] = col;
 
@@ -1393,42 +1657,43 @@ class Steel__Grid extends Steel__IDataReceiver{
 	/**
 	 * harmonizes columns of grid with fields in fetched data
 	 *
-	 * @param {Steel__DataProviderField[]|array} fieldsAvaliable
+	 * @param {Steel__DataProviderField[]|array} fieldsAvailable
 	 */
-	fieldsAvaliableUpdate(fieldsAvaliable){
+	fieldsAvailableUpdate(fieldsAvailable){
 		this.initIfNeed();
 
-
-		this.fieldsAvaliable = [];
-		this.fieldsAvaliableByName = {};
+		let fieldsAvaliableOld = this.fieldsAvailable;
+		this.fieldsAvailable = [];
+		this.fieldsAvailableByName = {};
 
 		for(let i=0; i<this.columns; i++){
 			this.columns[i].field = null;
 		}
 
-		if(fieldsAvaliable){
-			for(let i=0; i< fieldsAvaliable.length; i++){
-				let pf = fieldsAvaliable[i];
+		if(fieldsAvailable){
+			for(let i=0; i< fieldsAvailable.length; i++){
+				let pf = fieldsAvailable[i];
 				let f = null;
 				if(pf instanceof Steel__DataProviderField) f=pf;
 				else if(Steel.isAssociativeArray(pf)) f = new Steel__DataProviderField(pf);
 				else throw "unable to create from Steel__DataProviderField from gived value";
-				this.fieldsAvaliable.push(f);
-				this.fieldsAvaliableByName[f.name] = f;
+				this.fieldsAvailable.push(f);
+				this.fieldsAvailableByName[f.name] = f;
 				let col = this.columnsByName[f.name];
 				if(col) col.field = f;
 			}
 		}
 
 
-		if(this.settings.isColumnsAutogenerated){
-			this.columnsRecreate();
-			return;
+		if(JSON.stringify(fieldsAvaliableOld) != JSON.stringify(this.fieldsAvailable)){
+			//console.log("fieldsAvailable changed: ", JSON.stringify(fieldsAvaliableOld), "->", JSON.stringify(this.fieldsAvailable));
+			this.needRender.header = true;
 		}
 
 
-		//this.needRender.header = this.needRender.header || isChanged || isChangedOnlyHeader;
-		//this.needRender.body = this.needRender.body || isChanged;
+		if(this.settings.isColumnsAutogenerated){
+			this.columnsRecreate();
+		}
 	}
 
 
@@ -1468,15 +1733,15 @@ class Steel__Grid extends Steel__IDataReceiver{
 
 		let WIDTH_MIN = 50;
 
-		let totalWidthAutoAvaliableForExtra = totalWidthAuto - colsAutoCount * WIDTH_MIN;
+		let totalWidthAutoAvailableForExtra = totalWidthAuto - colsAutoCount * WIDTH_MIN;
 
-		if(totalWidthAutoAvaliableForExtra<=0){
+		if(totalWidthAutoAvailableForExtra<=0){
 			// insufficient place even for minimum size columns
 
 			let widthMin = Math.max( Math.floor(totalWidthAuto/colsAutoCount),3);
 			for(let i=0; i<this.columns.length; i++){
 				let col = this.columns[i];
-				if(col.settings.width == null){
+				if(!col.settings || col.settings.width == null){
 					col.widthAuto = widthMin;
 				}
 			}
@@ -1490,7 +1755,7 @@ class Steel__Grid extends Steel__IDataReceiver{
 				let row = this.rowsData[i];
 				for(let colName in row){
 					let col = this.columnsByName[colName];
-					if(!col || col.settings.width) continue;
+					if(col.settings && col.settings.width) continue;
 					let val = ""+row[colName];
 					let valWidth = val.length * 10; // yeah, this is dirty
 					colsAutoWidthContentMax[colName] = Math.max( colsAutoWidthContentMax[colName], valWidth);
@@ -1505,14 +1770,14 @@ class Steel__Grid extends Steel__IDataReceiver{
 		let totalWidthContentAutoExtra = 0;
 		for(let i=0; i<this.columns.length; i++){
 			let col = this.columns[i];
-			if(col.settings.width == null && colsAutoWidthContentMax[col.name] > WIDTH_MIN ){
+			if( (!col.settings || col.settings.width == null) && colsAutoWidthContentMax[col.name] > WIDTH_MIN ){
 				colsAutoHaveExtraWidth[col.name] = col;
 				totalWidthContentAutoExtra += colsAutoWidthContentMax[col.name] - WIDTH_MIN;
 			}
 
 		}
 
-		let ratioExtra = totalWidthContentAutoExtra ? totalWidthAutoAvaliableForExtra / totalWidthContentAutoExtra : 1;
+		let ratioExtra = totalWidthContentAutoExtra ? totalWidthAutoAvailableForExtra / totalWidthContentAutoExtra : 1;
 		ratioExtra = Math.min(ratioExtra, 1);
 
 		//console.log("colsAutoWidthContentMax",colsAutoWidthContentMax);
@@ -1598,7 +1863,7 @@ class Steel__Grid extends Steel__IDataReceiver{
 				if(isNaN(res)) res = 0;
 				break;
 
-			case Steel.ENUM_PROVIDER_DATA_TYPE.INT:
+			case Steel.ENUM_PROVIDER_DATA_TYPE.DOUBLE:
 				val = parseFloat( valStr.replace(",",".") );
 				if(isNaN(res)) res = 0;
 				break;
@@ -1615,21 +1880,6 @@ class Steel__Grid extends Steel__IDataReceiver{
 				throw "unsupported field type `"+field.dataType+"` of field `"+field.name+"`!";
 		}
 		return res;
-	}
-
-	/**
-	 * get value from cell's editor;  called when finished editing of row
-	 * @param {jQuery} $elem cell, i.e. <td> tag
-	 * @param {Steel__GridColumn} column
-	 * @return {mixed}
-	 */
-	getEditorValueDefault($cell, column){
-
-		let $editor = $cell.find('.sg_cellEditor');
-
-		let valMixed = $editor.length ? $editor.val() : '';
-
-		return Steel__Grid.convertValueToFieldDataType(valMixed, column.field);
 	}
 
 
@@ -1651,7 +1901,7 @@ class Steel__Grid extends Steel__IDataReceiver{
 
 
 
-		packets.push( new Steel__PacketOutGridInsertId());
+		packets.push( new Steel__PacketClientGridInsertId());
 		packets.push( this.packetFetchMake() );
 
 		this.settings.dataProvider.request(this, packets);
@@ -1695,12 +1945,12 @@ class Steel__Grid extends Steel__IDataReceiver{
 
 		row.rowData = rowDataNew;
 
-		let packetRequest = new Steel__PacketOutGridUpdate();
+		let packetRequest = new Steel__PacketClientGridUpdate();
 
 		packetRequest.keyValue = rowDataNew[this.keyFieldName];
 		packetRequest.columnValues = {};
-		for(let i=0; i<this.fieldsAvaliable.length; i++){
-			let field = this.fieldsAvaliable[i];
+		for(let i=0; i<this.fieldsAvailable.length; i++){
+			let field = this.fieldsAvailable[i];
 			if(!field.name in rowDataNew) continue;
 			packetRequest.columnValues[field.name] = rowDataNew[field.name];
 		}
@@ -1715,41 +1965,15 @@ class Steel__Grid extends Steel__IDataReceiver{
 		let row = this.currentRow;
 
 		if (isApply) {
-
 			// finding out changed fields and update them
-
-			let $cellsbyName = {};
-
-			let $cells = row.$row.find('.sg_cell');
-
-			let changedColumnsNames = [];
-
-
-			for (let i = 0; i < $cells.length; i++) {
-				let $cell = $($cells[i]);
-				let name = $cell.attr('sg_columnName');
-				$cellsbyName[name] = $cell;
-			}
 
 			let rowDataNew = Steel__getProperties(row.rowData);
 
-			for (let i = 0; i < this.columns.length; i++) {
-				let col = this.columns[i];
-				if(col.isReadOnly) continue;
-
-
-				let val = '';
-				let $cell = $cellsbyName[col.name];
-				if (!$cell) continue;
-
-				if (col.settings && col.settings.customGetEditorValue) {
-					val = col.settings.customGetEditorValue($cell);
-				}
-				else {
-					val = this.getEditorValueDefault($cell, col);
-				}
-
-				rowDataNew[col.name] = val;
+			for(let i=0; i<row.cells.length; i++){
+				let cell = row.cells[i];
+				if(cell.column.isReadOnly) continue;
+				let valMixedType = cell.getEditorValue(cell);
+				rowDataNew[cell.column.name] = Steel__Grid.convertValueToFieldDataType(valMixedType, cell.column.field);
 			}
 
 			this.onRowEditFinished(row, rowDataNew);
@@ -1779,11 +2003,41 @@ class Steel__Grid extends Steel__IDataReceiver{
 		let keyValue = row.rowData[this.keyFieldName];
 
 		let packets = [
-			( new Steel__PacketOutGridDelete() ).applyProperties({keyValue:keyValue}),
+			( new Steel__PacketClientGridDelete() ).applyProperties({keyValue:keyValue}),
 			this.packetFetchMake()
 		];
 		this.settings.dataProvider.request(this, packets);
 
 	}
+
+	util__filterSwitch(filterJsonObject, enable) {
+		var exists = false;
+
+		var arr = this.settings.filters;
+		if (arr) {
+			for (var i = 0; i < arr.length; i++){
+				var filterCur  = arr[i];
+				if(filterCur == filterJsonObject) {
+					exists = true;
+					if(!enable){
+						arr.splice(i,1);
+					}
+					break;
+				}
+			}
+		}
+
+		if(enable && !exists){
+			arr.push(filterJsonObject);
+		}
+
+		this.offset = 0;
+
+		this.fetchData();
+	}
+
 }
-Steel.Grid = Steel__Grid;
+window.Steel__Grid = Steel__Grid;
+
+
+

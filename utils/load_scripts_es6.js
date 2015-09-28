@@ -1,5 +1,14 @@
 "use strict";
 
+/*
+ * This file is part of Steel library.
+ *
+ * (c) Dmitry Sobchenko <sharpensteelgmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 
 function get_global_scope(){
 	return (function(){
@@ -68,7 +77,7 @@ function detect_es6_support(enable_trace){
 function load_scripts_es6(urls, babel_browser_js_url, enable_trace, on_complete_all){
 	var g = get_global_scope();
 
-	var default_context = { babel: g.babel, babel_is_loading: false, babel_urls_pending: [], on_babel_avaliable_arr: []};
+	var default_context = { babel: g.babel, babel_is_loading: false, babel_urls_pending: [], on_babel_available_arr: []};
 	g.LOADER_SCRIPTS_ES6 = g.LOADER_SCRIPTS_ES6 || default_context;
 	var _ = g.LOADER_SCRIPTS_ES6;
 
@@ -128,13 +137,13 @@ function load_scripts_es6(urls, babel_browser_js_url, enable_trace, on_complete_
 
 			if(enable_trace) console.log('load_scripts_es6: scripts waiting for babel:',urls)
 
-			var on_babel_avaliable = function on_babel_avaliable(){
+			var on_babel_available = function on_babel_available(){
 				load_script_native(babel_browser_js_url, function(){
 					_.babel = g.babel;
 					load_scripts(load_script_babel, urls, on_complete_all);
 				});
 			}
-			_.on_babel_avaliable_arr.push(on_babel_avaliable);
+			_.on_babel_available_arr.push(on_babel_available);
 
 			if(!_.babel_is_loading){
 				_.babel_is_loading = true;
@@ -143,8 +152,8 @@ function load_scripts_es6(urls, babel_browser_js_url, enable_trace, on_complete_
 					_.babel = g.babel;
 					if(enable_trace) console.log('load_scripts_es6: babel is loaded: ', !!_.babel);
 					_.babel_is_loading = false;
-					for(var i=0; i<_.on_babel_avaliable_arr.length; i++){
-						_.on_babel_avaliable_arr[i]();
+					for(var i=0; i<_.on_babel_available_arr.length; i++){
+						_.on_babel_available_arr[i]();
 					}
 				});
 			}

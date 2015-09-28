@@ -28,7 +28,7 @@ class Steel__DataProviderAjax extends Steel__DataProvider{
 
 	/**
 	 * @param {Steel__IDataReceiver} receiver
-	 * @param {Steel__PacketOutDataProvider[]} requestGroup
+	 * @param {Steel__PacketClientDataProvider[]} requestGroup
 	 */
 	request(receiver, requestsGroup)
 	{
@@ -59,7 +59,7 @@ class Steel__DataProviderAjax extends Steel__DataProvider{
 
             let responses = [];
 			for(let i = 0; i<data.length; i++){
-		        var response = new Steel__PacketInDataProvider();
+		        var response = new Steel__PacketServerDataProvider();
 				var packet = data[i];
 				for(var name in packet){
 					response[name] = packet[name];
@@ -85,4 +85,4 @@ class Steel__DataProviderAjax extends Steel__DataProvider{
 
 
 }
-Steel.DataProviderAjax = Steel__DataProviderAjax;
+window.Steel__DataProviderAjax = Steel__DataProviderAjax;

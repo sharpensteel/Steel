@@ -5,17 +5,17 @@ Javascript GridView library with paging, sorting, editing. Getting data from var
 * Data obtained from any of *data providers*. They can load data from server, static arrays, etc. 
 * Paging
 * Sorting
+* Filters
 * Insert / edit / delete records.
-* Customizible render of rows, cells, etc.
-* Support of edit of variuos types of data: listbox, date, ordinary string (complete list in <code>Steel__ENUM_CELL_EDITOR_TYPE</code>); or implement custom editor (only need to implement 2 functions)
-* TODO: filters
-* TODO: column resizing with mouse
+* Customizable render of rows, cells, etc.
+* Support of edit of various types of data: listbox, date, ordinary string (complete list in <code>Steel__ENUM_CELL_EDITOR_TYPE</code>); or implement custom editor (only need to implement 2 functions)
+
 
 ## Data providers
-<code>Steel__Grid</code> can obtain data from diferent types of sources: request data from server (<code>Steel__DataProviderAjax</code>) or static javascript arrays (<code>Steel__DataProviderStatic</code>)
+<code>Steel__Grid</code> can obtain data from different types of sources: request data from server (<code>Steel__DataProviderAjax</code>) or static javascript arrays (<code>Steel__DataProviderStatic</code>)
 
-To obtain data (or to push data changes) grid generating *requests* and send it to *data provider*. Then *data provider* doing actual work with data and returning *responces* back to grid.
-Types of *requests*: fetch data, insert record, update, delete (types listed at <code>Steel__ENUM_PACKET_REQUEST_OPERATION</code>):
+To obtain data (or to push data changes) grid generating *requests* and send it to *data provider*. Then *data provider* doing actual work with data and returning *responses* back to grid.
+Types of *requests*: fetch data, insert record, update, delete (types listed at <code>Steel__ENUM_PACKET_CLIENT_OPERATION</code>):
 See [test_ajax.php](https://github.com/sharpensteel/Steel/tree/master/tests/test_ajax.php) how to implement **server backend** of <code>Steel__DataProviderAjax</code> 
 
 

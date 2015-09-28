@@ -22,39 +22,40 @@ window.Steel__ENUM_PROVIDER_DATA_TYPE = {
 	BOOL: 'BOOL',
 	TIMESTAMP: 'TIMESTAMP'
 }
-Steel.ENUM_PROVIDER_DATA_TYPE = Steel__ENUM_PROVIDER_DATA_TYPE;
+Steel.ENUM_PROVIDER_DATA_TYPE = window.Steel__ENUM_PROVIDER_DATA_TYPE;
 
-window.Steel__ENUM_PACKET_REQUEST_OPERATION = {
+window.Steel__ENUM_PACKET_CLIENT_OPERATION = {
 	FETCH: 'FETCH',
 	INSERT_ID: 'INSERT_ID', // inserts empty record to get ID of new record; need FETCH packet after
 	UPDATE: 'UPDATE',
 	DELETE: 'DELETE'
 };
-Steel.ENUM_PACKET_REQUEST_OPERATION = Steel__ENUM_PACKET_REQUEST_OPERATION;
+Steel.ENUM_PACKET_CLIENT_OPERATION = window.Steel__ENUM_PACKET_CLIENT_OPERATION;
 
-window.Steel__ENUM_PACKET_RESPONSE_OPERATION = {
+window.Steel__ENUM_PACKET_SERVER_OPERATION = {
 	AFTER_FETCH: 'AFTER_FETCH',
 	AFTER_INSERT_ID: 'AFTER_INSERT_ID',
 	AFTER_UPDATE: 'AFTER_UPDATE',
 	AFTER_DELETE: 'AFTER_DELETE',
 	ERROR: 'ERROR'
 };
-Steel.ENUM_PACKET_RESPONSE_OPERATION = Steel__ENUM_PACKET_RESPONSE_OPERATION;
+Steel.ENUM_PACKET_SERVER_OPERATION = window.Steel__ENUM_PACKET_SERVER_OPERATION;
 
 
 class Steel__IConfigurable{
 	/** @abstract */
-	configure(props){ throw Steel.EXCEPTION__ABSTRACT_METHOD; }
+	configure(props){ throw Steel__EXCEPTION__ABSTRACT_METHOD; }
 
 	/** @abstract */
-	getConfiguration(){ throw Steel.EXCEPTION__ABSTRACT_METHOD;	}
+	getConfiguration(){ throw Steel__EXCEPTION__ABSTRACT_METHOD;	}
 }
-Steel.IConfigurable = Steel__IConfigurable;
+window.Steel__IConfigurable = Steel__IConfigurable;
 
 
 class Steel__ArrayWithAssociative extends Steel__IConfigurable{
 
 	constructor(keyName){
+		super();
 
 		this._keyNameAssociative = keyName;
 
@@ -126,19 +127,17 @@ class Steel__ArrayWithAssociative extends Steel__IConfigurable{
 
 
 }
-Steel.ArrayWithAssociative = Steel__ArrayWithAssociative;
-
-Steel.ArrayWithAssociative = Steel__ArrayWithAssociative;
+window.Steel__ArrayWithAssociative = Steel__ArrayWithAssociative;
 
 /** @returns {bool} true if argument not undefined/null/NaN */
 function Steel__isObject(a){ return a == Object(a); }
-Steel.isObject = Steel__isObject;
+Steel.isObject = window.Steel__isObject = Steel__isObject;
 
-function Steel__isAssociativeArray(a){ return a == Object(a) && !(a instanceof Array) && a.constructor.name == "Object"; }
-Steel.isAssociativeArray = Steel__isAssociativeArray;
+function Steel__isAssociativeArray(a){ return a == Object(a) && !(a instanceof Array) && (a.constructor.name == "Object" || a.constructor == Object); }
+Steel.isAssociativeArray = window.Steel__isAssociativeArray = Steel__isAssociativeArray;
 
 function Steel__isSet(a){ return a != undefined && !(typeof a == 'number' && isNaN(a)) && a != null; }
-Steel.isSet = Steel__isSet;
+Steel.isSet = window.Steel__isSet = Steel__isSet;
 
 function Steel__htmlEscape(str) {
 	return String(str)
@@ -148,7 +147,7 @@ function Steel__htmlEscape(str) {
 		.replace(/</g, '&lt;')
 		.replace(/>/g, '&gt;');
 }
-Steel.htmlEscape = Steel__htmlEscape;
+Steel.htmlEscape = window.Steel__htmlEscape = Steel__htmlEscape;
 
 function Steel__htmlUnescape(value){
 	return String(value)
@@ -158,7 +157,7 @@ function Steel__htmlUnescape(value){
 		.replace(/&gt;/g, '>')
 		.replace(/&amp;/g, '&');
 }
-Steel.htmlUnescape = Steel__htmlUnescape;
+Steel.htmlUnescape = window.Steel__htmlUnescape = Steel__htmlUnescape;
 
 
 function Steel__applyProperties(obj, props){
@@ -181,7 +180,7 @@ function Steel__applyProperties(obj, props){
 			else if(currentPropVal instanceof Steel__IConfigurable){
 				currentPropVal.configure(newPropVal);
 			}
-			else if( Steel__isAssociativeArray(newPropVal) ){
+			else if( Steel__isAssociativeArray(currentPropVal) ){
 				// recursive call
 				Steel__applyProperties(currentPropVal, newPropVal);
 			}
@@ -194,7 +193,7 @@ function Steel__applyProperties(obj, props){
 		}
 	}
 }
-Steel.applyProperties = Steel__applyProperties;
+Steel.applyProperties = window.Steel__applyProperties = Steel__applyProperties;
 
 
 /** makes shallow copy of object or associative array */
@@ -209,7 +208,7 @@ function Steel__getProperties(obj){
 	}
 	return props;
 }
-Steel.getProperties = Steel__getProperties;
+Steel.getProperties = window.Steel__getProperties = Steel__getProperties;
 
 
 class Steel__Component{
@@ -222,7 +221,7 @@ class Steel__Component{
 		return this;
 	}
 }
-Steel.Component = Steel__Component;
+window.Steel__Component = Steel__Component;
 
 
 class Steel__TagRenderParams{
@@ -267,19 +266,19 @@ class Steel__TagRenderParams{
 		return html;
 	}
 }
-Steel.TagRenderParams = Steel__TagRenderParams;
+window.Steel__TagRenderParams = Steel__TagRenderParams;
 
 
 
 class Steel__IDataReceiver extends Steel__Component{
 
 	/**
-	 * @param {Steel__PacketInDataProvider[]} packets
+	 * @param {Steel__PacketServerDataProvider[]} packets
 	 */
 	onDataReceived(packets){ throw Steel__EXCEPTION__ABSTRACT_METHOD; }
 
 }
-Steel.IDataReceiver = Steel__IDataReceiver;
+window.Steel__IDataReceiver = Steel__IDataReceiver;
 
 
 
@@ -287,12 +286,12 @@ Steel.IDataReceiver = Steel__IDataReceiver;
 // packets
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Steel__PacketInDataProvider extends Steel__Component{
+class Steel__PacketServerDataProvider extends Steel__Component{
 
 	constructor(props){
 		super();
 
-		/** @var Steel__ENUM_PACKET_RESPONSE_OPERATION  */
+		/** @var {Steel__ENUM_PACKET_SERVER_OPERATION}  */
 		this.operation = null;
 
 		this.errorMessage = null;
@@ -302,31 +301,31 @@ class Steel__PacketInDataProvider extends Steel__Component{
 	}
 
 };
-Steel.PacketInDataProvider = Steel__PacketInDataProvider;
+window.Steel__PacketServerDataProvider = Steel__PacketServerDataProvider;
 
 
-class Steel__PacketInDataProviderFetch extends Steel__PacketInDataProvider{
+class Steel__PacketServerDataProviderFetch extends Steel__PacketServerDataProvider{
 
 	constructor(props){
 		super();
 
-		/** @var Steel__DataProviderField[]|null */
-		this.fieldsAvaliable = null;
+		/** @var {Steel__DataProviderField[]|null} */
+		this.fieldsAvailable = null;
 
-		/** @var mixed[];  example: [{'id':78, 'name':'Esda'}, ...]; if this packet is response on change operation, there will be changed rows   */
+		/** @var {mixed[]}  example: [{'id':78, 'name':'Esda'}, ...]; if this packet is response on change operation, there will be changed rows   */
 		this.rows = [];
 
-		/** @var string */
+		/** @var {string} */
 		this.keyFieldName = null;
 
 		if(props) this.applyProperties(props);
 	}
 
 	/**
-	 * @param {Steel__PacketInDataProviderFetch} packet
+	 * @param {Steel__PacketServerDataProviderFetch} packet
 	 */
-	static generateFieldsAvaliableByRows(packet){
-		packet.fieldsAvaliable = [];
+	static generateFieldsAvailableByRows(packet){
+		packet.fieldsAvailable = [];
 		if(!packet.rows || !packet.rows.length){
 			return;
 		}
@@ -336,34 +335,34 @@ class Steel__PacketInDataProviderFetch extends Steel__PacketInDataProvider{
 		for(let fieldName in row){
 			let field = new Steel__DataProviderField();
 			field.name = fieldName;
-			packet.fieldsAvaliable.push(field);
+			packet.fieldsAvailable.push(field);
 		}
 	}
 
 };
-Steel.PacketInDataProviderFetch = Steel__PacketInDataProviderFetch;
+window.Steel__PacketServerDataProviderFetch = Steel__PacketServerDataProviderFetch;
 
 
-class Steel__PacketOutDataProvider extends Steel__Component{
+class Steel__PacketClientDataProvider extends Steel__Component{
 
 	constructor(props){
 		super();
 
-		/** @var string one of Steel__ENUM_PACKET_REQUEST_OPERATION constants */
+		/** @var string one of Steel__ENUM_PACKET_CLIENT_OPERATION constants */
 		this.operation = null;
 
 		if(props) this.applyProperties(props);
 	}
 };
-Steel.PacketOutDataProvider = Steel__PacketOutDataProvider;
+window.Steel__PacketClientDataProvider = Steel__PacketClientDataProvider;
 
 
-class Steel__PacketOutDataProviderAfterInsertId extends Steel__PacketOutDataProvider{
+class Steel__PacketClientDataProviderAfterInsertId extends Steel__PacketClientDataProvider{
 
 	constructor(props){
 		super();
 
-		this.operation = Steel.ENUM_PACKET_RESPONSE_OPERATION.AFTER_INSERT_ID;
+		this.operation = Steel.ENUM_PACKET_SERVER_OPERATION.AFTER_INSERT_ID;
 
 		/** @var mixed key of newly inserted record; example: 68392 */
 		this.keyValue = null;
@@ -371,7 +370,7 @@ class Steel__PacketOutDataProviderAfterInsertId extends Steel__PacketOutDataProv
 		if(props) this.applyProperties(props);
 	}
 };
-Steel.PacketOutDataProviderAfterInsertId = Steel__PacketOutDataProviderAfterInsertId;
+window.Steel__PacketClientDataProviderAfterInsertId = Steel__PacketClientDataProviderAfterInsertId;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 //  end of packets
@@ -399,7 +398,7 @@ class Steel__DataProviderField extends Steel__Component{
 	}
 
 }
-Steel.DataProviderField = Steel__DataProviderField;
+window.Steel__DataProviderField = Steel__DataProviderField;
 
 
 class Steel__DataProvider extends Steel__Component{
@@ -415,13 +414,13 @@ class Steel__DataProvider extends Steel__Component{
 	/**
 	 *
 	 * @param {Steel__IDataReceiver} receiver
-	 * @param {Steel__PacketOutDataProvider[]} packets
+	 * @param {Steel__PacketClientDataProvider[]} packets
 	 *
 	 */
 	request(receiver, packets){ throw Steel__EXCEPTION__ABSTRACT_METHOD; }
 
 }
-Steel.DataProvider = Steel__DataProvider;
+window.Steel__DataProvider = Steel__DataProvider;
 
 
 

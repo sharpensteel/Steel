@@ -15,20 +15,30 @@
 /*	background-color: #CBD9F1;*/
 }
 
-.Steel__Grid input.sg_cellEditor, .Steel__Grid textarea.sg_cellEditor{
+.Steel__Grid input.sg_cellEditor,
+.Steel__Grid textarea.sg_cellEditor,
+.sg_hasEditor .Steel__ListBox{
 	padding: 0;
 	margin: 0;
 	width: 97%;
 }
 
 
+.Steel__Grid textarea.sg_cellEditor{ min-height: 50px; }
+
+
+
+.Steel__Grid tfoot{
+	font-style: normal;
+}
+
 .Steel__Grid .sg_th,
+.Steel__Grid .sg_filter,
 .Steel__Grid .sg_cell,
 .Steel__Grid .sg_pageNavigation{
 	border: 1px solid #a4bed4;
 	padding: 2px 4px 2px 4px;
 }
-
 
 .Steel__Grid .sg_th{
 	text-align: center;
@@ -48,6 +58,7 @@
 	float: right;
 	padding-right: 4px;
 	line-height: 22px;
+	font-style: italic;
 }
 
 .Steel__Grid .sg_pageNavigation > *{ vertical-align: middle; }
@@ -87,7 +98,7 @@
 
 .sg_buttonsPages{
 	display: inline-block;
-	max-width: 70%;
+	max-width: 500px;
 	overflow: hidden;
 	padding-left: 6px;
 	padding-right: 6px;
@@ -153,12 +164,15 @@
 }
 
 .Steel__Grid .sg_buttonInsert{
-	width: 20px;
 	height: 20px;
+	padding-left: 4px;
+	padding-right: 4px;
 	border-color: #a4bed4;
 	margin-right: 20px;
 	line-height: 21px;
     text-align: center;
+	border-color: #597D9A;
+	background-color: #CEEAFB;
 }
 
 .Steel__Grid .sg_rowEditing{
@@ -217,6 +231,10 @@
 .Steel__Grid [sg_celleditortype=NUMBER_INT],
 .Steel__Grid [sg_celleditortype=NUMBER_DOUBLE]
 {
-	width: 96%;
-	min-width: 50px;
+width: 96%;
+min-width: 50px;
+}
+
+.Steel__Grid input.sg_cellEditor[type="date"]{
+	max-width: 125px;
 }

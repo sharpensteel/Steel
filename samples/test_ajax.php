@@ -56,7 +56,7 @@ function endpointTest(){
 			case 'FETCH':
 				/*
 				$packet:
-				(class Steel.PacketOutGridFetch)
+				(class Steel.PacketClientGridFetch)
 				array(3) {
 					["operation"]=>
 					string(5) "FETCH"
@@ -92,8 +92,8 @@ function endpointTest(){
 
 				$rows = array_slice($data, $offset, $limit ? $limit : $totalRows);
 
-				/* @var mixed[] fields same as in class Steel.PacketInGridFetch */
-				$packetOut = [
+				/* @var mixed[] fields same as in class Steel.PacketServerGridFetch */
+				$PacketClient = [
 					'operation' => 'AFTER_FETCH',
 					'totalRows' => $totalRows,
 					'offset' => $offset,
@@ -102,7 +102,7 @@ function endpointTest(){
 					'keyColumnName' => 'id'
 				];
 
-				$response[] = $packetOut;
+				$response[] = $PacketClient;
 
 				break;
 			default:
@@ -116,12 +116,12 @@ function endpointTest(){
 			if($e instanceof  Steel__UserReadableException){
 				$errorMessage = $e->getMessage();
 			}
-			$packetOut = [
+			$PacketClient = [
 				'operation' => 'ERROR',
 				'errorMessage' => $errorMessage,
 				'errorRequest' => $request,
 			];
-			$response[] = $packetOut;
+			$response[] = $PacketClient;
 		}
 	}
 
