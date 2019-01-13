@@ -1,5 +1,5 @@
 ## Steel
-Javascript GridView library with paging, sorting, editing. Getting data from various sorces.
+Javascript GridView library with paging, sorting, editing. Getting data from various sources.
 
 ## Features
 * Data obtained from any of *data providers*. They can load data from server, static arrays, etc. 
